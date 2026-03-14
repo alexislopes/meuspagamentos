@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { supabase } from '../../infrastructure/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
@@ -53,12 +53,25 @@ export const useAuthStore = defineStore('auth', () => {
     await supabase.auth.signOut()
   }
 
+  function waitForInit() {
+    if (!loading.value) return Promise.resolve()
+    return new Promise<void>((resolve) => {
+      const stop = watch(loading, (val) => {
+        if (!val) {
+          stop()
+          resolve()
+        }
+      })
+    })
+  }
+
   return {
     user,
     loading,
     error,
     isAuthenticated,
     init,
+    waitForInit,
     login,
     register,
     logout,

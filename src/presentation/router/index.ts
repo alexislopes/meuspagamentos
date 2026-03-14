@@ -32,8 +32,12 @@ export const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
+
+  if (authStore.loading) {
+    await authStore.waitForInit()
+  }
 
   if (to.matched.some((r) => r.meta.requiresAuth) && !authStore.isAuthenticated) {
     return { name: 'login' }
