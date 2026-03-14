@@ -5,6 +5,16 @@ import type { CreateFixedExpenseDTO } from '../../../application/dto/CreateFixed
 import { useExpenseStore } from '../../stores/useExpenseStore'
 import { DUE_DAY_OPTIONS } from '../../../shared/constants'
 
+const props = withDefaults(defineProps<{
+  inline?: boolean
+}>(), {
+  inline: false,
+})
+
+const emit = defineEmits<{
+  saved: []
+}>()
+
 const router = useRouter()
 const expenseStore = useExpenseStore()
 
@@ -30,7 +40,15 @@ async function handleSubmit() {
   }
 
   await expenseStore.addExpense(dto)
-  router.push('/')
+
+  if (props.inline) {
+    form.name = ''
+    form.amount = ''
+    form.dueDay = 1
+    emit('saved')
+  } else {
+    router.push('/')
+  }
 }
 </script>
 

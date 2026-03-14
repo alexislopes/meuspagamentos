@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import type { MonthlyExpenseDTO } from '../../../application/dto/MonthlyExpenseDTO'
 import { ExpenseStatus } from '../../../domain/value-objects/ExpenseStatus'
 import { useCurrency } from '../../composables/useCurrency'
@@ -37,6 +37,23 @@ watch(showEditModal, (open) => {
   }
 })
 
+const isPaid = computed(() => props.expense.status === ExpenseStatus.PAID)
+const isSkipped = computed(() => props.expense.status === ExpenseStatus.SKIPPED)
+const isPending = computed(() => props.expense.status === ExpenseStatus.PENDING)
+
+const secondaryActions = computed(() => [
+  [{
+    label: 'Editar',
+    icon: 'i-lucide-pencil',
+    onSelect: () => { showEditModal.value = true },
+  }, {
+    label: 'Excluir',
+    icon: 'i-lucide-trash-2',
+    color: 'error' as const,
+    onSelect: () => { showDeleteModal.value = true },
+  }],
+])
+
 async function handlePay() {
   await expenseStore.markAsPaid(props.expense.expenseId)
 }
@@ -69,123 +86,145 @@ async function handleEdit() {
 </script>
 
 <template>
-  <UCard>
-    <div class="flex items-center justify-between gap-4">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <h3 class="font-medium truncate">{{ expense.name }}</h3>
-          <ExpenseStatusBadge :status="expense.status" />
-        </div>
-        <div class="flex items-center gap-3 mt-1 text-sm text-[var(--ui-text-dimmed)]">
-          <span class="font-semibold text-[var(--ui-text)]">{{ formatCents(expense.amountInCents) }}</span>
-          <span>Dia {{ expense.dueDay }}</span>
-        </div>
-      </div>
+  <div
+    class="group flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors"
+    :class="[
+      isPaid ? 'border-success/20 bg-success/4' : '',
+      isSkipped ? 'border-muted opacity-50' : '',
+      isPending ? 'border-muted hover:border-accented bg-elevated' : '',
+    ]"
+  >
+    <!-- Due day pill -->
+    <div
+      class="flex flex-col items-center justify-center w-9 h-9 rounded-md text-center shrink-0"
+      :class="isPaid ? 'bg-success/10' : 'bg-accented'"
+    >
+      <span class="text-[9px] text-muted leading-none uppercase">dia</span>
+      <span class="text-sm font-bold leading-tight tabular-nums" :class="isPaid ? 'text-success' : 'text-highlighted'">{{ expense.dueDay }}</span>
+    </div>
 
-      <div class="flex items-center gap-1">
-        <template v-if="expense.status === ExpenseStatus.PENDING">
+    <!-- Name + amount -->
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <h3 class="text-sm font-medium truncate" :class="isPaid ? 'line-through text-muted' : 'text-highlighted'">
+          {{ expense.name }}
+        </h3>
+        <ExpenseStatusBadge v-if="!isPending" :status="expense.status" />
+      </div>
+      <span class="text-sm tabular-nums" :class="isPaid ? 'text-muted' : 'font-semibold text-toned'">
+        {{ formatCents(expense.amountInCents) }}
+      </span>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-1 shrink-0">
+      <template v-if="isPending">
+        <UTooltip text="Marcar como pago">
           <UButton
             icon="i-lucide-check"
             color="success"
             variant="soft"
-            size="sm"
+            size="xs"
             @click="handlePay"
           />
+        </UTooltip>
+        <UTooltip text="Pular este mês">
           <UButton
             icon="i-lucide-fast-forward"
             color="neutral"
-            variant="soft"
-            size="sm"
+            variant="ghost"
+            size="xs"
             @click="handleSkip"
           />
-        </template>
-        <template v-else>
+        </UTooltip>
+      </template>
+      <template v-else>
+        <UTooltip text="Reverter para pendente">
           <UButton
             icon="i-lucide-undo-2"
             color="warning"
-            variant="soft"
-            size="sm"
+            variant="ghost"
+            size="xs"
             @click="handleRevert"
           />
-        </template>
+        </UTooltip>
+      </template>
+      <UDropdownMenu :items="secondaryActions">
         <UButton
-          icon="i-lucide-pencil"
+          icon="i-lucide-ellipsis-vertical"
+          variant="ghost"
+          size="xs"
           color="neutral"
-          variant="ghost"
-          size="sm"
-          @click="showEditModal = true"
+          class="opacity-0 group-hover:opacity-100 transition-opacity"
         />
-        <UButton
-          icon="i-lucide-trash-2"
-          color="error"
-          variant="ghost"
-          size="sm"
-          @click="showDeleteModal = true"
-        />
-      </div>
+      </UDropdownMenu>
     </div>
+  </div>
 
-    <UModal v-model:open="showDeleteModal">
-      <template #content>
-        <UCard>
-          <template #header>
-            <h3 class="font-semibold">Confirmar exclusão</h3>
-          </template>
-          <p>
-            Tem certeza que deseja excluir <strong>{{ expense.name }}</strong>?
-            Este gasto será removido deste mês e de todos os meses futuros.
+  <!-- Delete modal -->
+  <UModal v-model:open="showDeleteModal">
+    <template #content>
+      <UCard>
+        <template #header>
+          <h3 class="font-semibold">Confirmar exclusão</h3>
+        </template>
+        <UAlert
+          color="error"
+          variant="soft"
+          icon="i-lucide-triangle-alert"
+          :description="`Tem certeza que deseja excluir ${expense.name}? Este gasto será removido deste mês e de todos os meses futuros.`"
+        />
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton label="Cancelar" variant="outline" @click="showDeleteModal = false" />
+            <UButton label="Excluir" color="error" @click="handleDelete" />
+          </div>
+        </template>
+      </UCard>
+    </template>
+  </UModal>
+
+  <!-- Edit modal -->
+  <UModal v-model:open="showEditModal">
+    <template #content>
+      <UCard>
+        <template #header>
+          <h3 class="font-semibold">Editar gasto</h3>
+        </template>
+        <form @submit.prevent="handleEdit" class="space-y-4">
+          <UFormField label="Nome do gasto">
+            <UInput
+              v-model="editForm.name"
+              placeholder="Ex: Netflix, Aluguel..."
+              icon="i-lucide-text"
+              required
+            />
+          </UFormField>
+          <UFormField label="Valor (R$)">
+            <UInput
+              v-model="editForm.amount"
+              placeholder="0,00"
+              icon="i-lucide-dollar-sign"
+              inputmode="decimal"
+              required
+            />
+          </UFormField>
+          <UFormField label="Dia de vencimento">
+            <USelect
+              v-model="editForm.dueDay"
+              :items="dueDayItems"
+              value-key="value"
+            />
+          </UFormField>
+          <p class="text-sm text-dimmed">
+            As alterações serão aplicadas a partir deste mês em diante.
           </p>
-          <template #footer>
-            <div class="flex justify-end gap-2">
-              <UButton label="Cancelar" variant="outline" @click="showDeleteModal = false" />
-              <UButton label="Excluir" color="error" @click="handleDelete" />
-            </div>
-          </template>
-        </UCard>
-      </template>
-    </UModal>
-
-    <UModal v-model:open="showEditModal">
-      <template #content>
-        <UCard>
-          <template #header>
-            <h3 class="font-semibold">Editar gasto</h3>
-          </template>
-          <form @submit.prevent="handleEdit" class="space-y-4">
-            <UFormField label="Nome do gasto">
-              <UInput
-                v-model="editForm.name"
-                placeholder="Ex: Netflix, Aluguel..."
-                icon="i-lucide-text"
-                required
-              />
-            </UFormField>
-            <UFormField label="Valor (R$)">
-              <UInput
-                v-model="editForm.amount"
-                placeholder="0,00"
-                icon="i-lucide-dollar-sign"
-                inputmode="decimal"
-                required
-              />
-            </UFormField>
-            <UFormField label="Dia de vencimento">
-              <USelect
-                v-model="editForm.dueDay"
-                :items="dueDayItems"
-                value-key="value"
-              />
-            </UFormField>
-            <p class="text-sm text-[var(--ui-text-dimmed)]">
-              As alterações serão aplicadas a partir deste mês em diante.
-            </p>
-            <div class="flex justify-end gap-2">
-              <UButton label="Cancelar" variant="outline" @click="showEditModal = false" />
-              <UButton type="submit" label="Salvar" icon="i-lucide-check" />
-            </div>
-          </form>
-        </UCard>
-      </template>
-    </UModal>
-  </UCard>
+          <div class="flex justify-end gap-2">
+            <UButton label="Cancelar" variant="outline" @click="showEditModal = false" />
+            <UButton type="submit" label="Salvar" icon="i-lucide-check" />
+          </div>
+        </form>
+      </UCard>
+    </template>
+  </UModal>
 </template>

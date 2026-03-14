@@ -15,7 +15,17 @@ const { expenses, summary } = storeToRefs(expenseStore)
 <template>
   <div class="space-y-6">
     <MonthNavigator />
-    <MonthlySummary :summary="summary" />
-    <ExpenseList :expenses="expenses" />
+
+    <div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
+      <!-- Sidebar: summary sticky on desktop -->
+      <aside class="lg:sticky lg:top-6">
+        <MonthlySummary :summary="summary" />
+      </aside>
+
+      <!-- Main: expense list -->
+      <section>
+        <ExpenseList :expenses="expenses" />
+      </section>
+    </div>
   </div>
 </template>

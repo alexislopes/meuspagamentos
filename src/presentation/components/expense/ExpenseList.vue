@@ -4,10 +4,13 @@ import type { MonthlyExpenseDTO } from '../../../application/dto/MonthlyExpenseD
 import { ExpenseStatus } from '../../../domain/value-objects/ExpenseStatus'
 import { useCurrency } from '../../composables/useCurrency'
 import ExpenseCard from './ExpenseCard.vue'
+import { useCreateExpense } from '../../composables/useCreateExpense'
 
 const props = defineProps<{
   expenses: MonthlyExpenseDTO[]
 }>()
+
+const { open: openCreateSlideover } = useCreateExpense()
 
 const { formatCents } = useCurrency()
 
@@ -33,11 +36,12 @@ const secondHalfTotal = computed(() => sumCents(secondHalf.value))
   <div class="space-y-6">
     <template v-if="expenses.length > 0">
       <section v-if="firstHalf.length > 0">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="text-sm font-semibold text-highlighted">1ª Quinzena</h3>
-          <span class="text-sm text-dimmed">{{ formatCents(firstHalfTotal) }}</span>
+        <div class="flex items-center gap-3 mb-3">
+          <h3 class="text-xs font-semibold text-muted uppercase tracking-wider whitespace-nowrap">1ª Quinzena</h3>
+          <div class="flex-1 border-b border-muted" />
+          <span class="text-xs font-medium text-dimmed tabular-nums">{{ formatCents(firstHalfTotal) }}</span>
         </div>
-        <div class="space-y-3">
+        <div class="space-y-2">
           <ExpenseCard
             v-for="expense in firstHalf"
             :key="expense.expenseId"
@@ -47,11 +51,12 @@ const secondHalfTotal = computed(() => sumCents(secondHalf.value))
       </section>
 
       <section v-if="secondHalf.length > 0">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="text-sm font-semibold text-highlighted">2ª Quinzena</h3>
-          <span class="text-sm text-dimmed">{{ formatCents(secondHalfTotal) }}</span>
+        <div class="flex items-center gap-3 mb-3">
+          <h3 class="text-xs font-semibold text-muted uppercase tracking-wider whitespace-nowrap">2ª Quinzena</h3>
+          <div class="flex-1 border-b border-muted" />
+          <span class="text-xs font-medium text-dimmed tabular-nums">{{ formatCents(secondHalfTotal) }}</span>
         </div>
-        <div class="space-y-3">
+        <div class="space-y-2">
           <ExpenseCard
             v-for="expense in secondHalf"
             :key="expense.expenseId"
@@ -61,18 +66,15 @@ const secondHalfTotal = computed(() => sumCents(secondHalf.value))
       </section>
     </template>
 
-    <UCard v-else>
-      <div class="text-center py-8 text-dimmed">
-        <UIcon name="i-lucide-inbox" class="text-4xl mb-2" />
-        <p>Nenhum gasto cadastrado para este mês.</p>
-        <UButton
-          label="Cadastrar gasto"
-          variant="soft"
-          class="mt-4"
-          to="/expenses/new"
-          icon="i-lucide-plus"
-        />
-      </div>
-    </UCard>
+    <div v-else class="text-center py-16 text-muted">
+      <UIcon name="i-lucide-notebook-pen" class="text-5xl mb-3 opacity-40" />
+      <p class="text-base font-medium text-toned mb-1">Nenhum gasto cadastrado</p>
+      <p class="text-sm mb-5">Comece adicionando seus gastos fixos mensais.</p>
+      <UButton
+        label="Adicionar primeiro gasto"
+        icon="i-lucide-plus"
+        @click="openCreateSlideover()"
+      />
+    </div>
   </div>
 </template>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useCurrency } from '../../composables/useCurrency'
 
-defineProps<{
+const props = defineProps<{
   label: string
   amountInCents: number
   icon: string
@@ -9,16 +10,29 @@ defineProps<{
 }>()
 
 const { formatCents } = useCurrency()
+
+const colorClasses = computed(() => {
+  const map: Record<string, { bg: string; text: string }> = {
+    primary: { bg: 'bg-primary/10', text: 'text-primary' },
+    success: { bg: 'bg-success/10', text: 'text-success' },
+    warning: { bg: 'bg-warning/10', text: 'text-warning' },
+    error: { bg: 'bg-error/10', text: 'text-error' },
+    neutral: { bg: 'bg-neutral/10', text: 'text-neutral' },
+  }
+  return map[props.color]
+})
 </script>
 
 <template>
-  <UCard class="flex-1">
-    <div class="flex items-center gap-3">
-      <div class="flex-1">
-        <p class="text-sm text-[var(--ui-text-dimmed)]">{{ label }}</p>
+  <UCard>
+    <div class="space-y-3">
+      <div class="size-10 rounded-full flex items-center justify-center" :class="colorClasses.bg">
+        <UIcon :name="icon" class="text-lg" :class="colorClasses.text" />
+      </div>
+      <div>
+        <p class="text-sm text-dimmed">{{ label }}</p>
         <p class="text-2xl font-bold mt-1">{{ formatCents(amountInCents) }}</p>
       </div>
-      <UIcon :name="icon" class="text-2xl" :class="`text-[var(--ui-${color})]`" />
     </div>
   </UCard>
 </template>

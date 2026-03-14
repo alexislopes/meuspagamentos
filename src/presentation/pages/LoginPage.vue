@@ -35,13 +35,16 @@ function toggleMode() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4">
+  <div class="min-h-screen flex items-center justify-center px-4 bg-default">
     <div class="w-full max-w-sm">
-      <UCard>
+      <div class="rounded-xl border border-muted bg-elevated p-8">
         <div class="space-y-6">
           <div class="text-center">
-            <h1 class="text-2xl font-bold text-[var(--ui-primary)]">Meus Pagamentos</h1>
-            <p class="text-sm text-dimmed mt-1">
+            <div class="size-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <UIcon name="i-lucide-wallet" class="text-2xl text-primary" />
+            </div>
+            <h1 class="font-serif text-2xl font-semibold text-highlighted tracking-tight">Meus Pagamentos</h1>
+            <p class="text-sm text-muted mt-1">
               {{ isRegister ? 'Crie sua conta para continuar' : 'Faça login para continuar' }}
             </p>
           </div>
@@ -54,6 +57,7 @@ function toggleMode() {
                 placeholder="seu@email.com"
                 icon="i-lucide-mail"
                 required
+                class="w-full"
               />
             </UFormField>
 
@@ -64,12 +68,17 @@ function toggleMode() {
                 placeholder="Sua senha"
                 icon="i-lucide-lock"
                 required
+                class="w-full"
               />
             </UFormField>
 
-            <p v-if="authStore.error" class="text-sm text-[var(--ui-error)]">
-              {{ authStore.error }}
-            </p>
+            <UAlert
+              v-if="authStore.error"
+              color="error"
+              variant="soft"
+              icon="i-lucide-circle-alert"
+              :description="authStore.error"
+            />
 
             <UButton
               type="submit"
@@ -79,22 +88,18 @@ function toggleMode() {
             />
           </form>
 
-          <p class="text-center text-sm text-dimmed">
+          <p class="text-center text-sm text-muted">
             <template v-if="isRegister">
               Já tem conta?
-              <button class="text-[var(--ui-primary)] hover:underline" @click="toggleMode">
-                Entrar
-              </button>
+              <UButton variant="link" label="Entrar" size="sm" @click="toggleMode" />
             </template>
             <template v-else>
               Ainda não tem conta?
-              <button class="text-[var(--ui-primary)] hover:underline" @click="toggleMode">
-                Criar conta
-              </button>
+              <UButton variant="link" label="Criar conta" size="sm" @click="toggleMode" />
             </template>
           </p>
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

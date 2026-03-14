@@ -1,2 +1,31 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+/*
+ * Caderneta — warm ledger palette
+ * Colors drawn from paper, ink, and the ritual of checking off bills
+ */
+
+@theme {
+  --font-serif: Georgia, "Times New Roman", serif;
+}
+
+:root {
+  /* Warm parchment surfaces */
+  --ui-bg: oklch(97.5% 0.008 80);
+  --ui-bg-muted: oklch(95.5% 0.01 80);
+  --ui-bg-elevated: oklch(99% 0.005 80);
+  --ui-bg-accented: oklch(93% 0.012 80);
+
+  /* Ink text hierarchy */
+  --ui-text-highlighted: oklch(22% 0.02 60);
+  --ui-text: oklch(30% 0.02 60);
+  --ui-text-toned: oklch(42% 0.015 60);
+  --ui-text-muted: oklch(52% 0.012 65);
+  --ui-text-dimmed: oklch(62% 0.01 70);
+
+  /* Ruled-line borders */
+  --ui-border: oklch(82% 0.01 75 / 0.6);
+  --ui-border-muted: oklch(87% 0.008 75 / 0.5);
+  --ui-border-accented: oklch(72% 0.015 70 / 0.6);
+}
