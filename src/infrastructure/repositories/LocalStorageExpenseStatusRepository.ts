@@ -26,6 +26,18 @@ export class LocalStorageExpenseStatusRepository implements IExpenseStatusReposi
     return ExpenseStatusMapper.monthToMap(store[month.key])
   }
 
+  async getStatusesForMonths(months: YearMonth[]): Promise<Map<string, Map<string, ExpenseStatus>>> {
+    const store = this.readStore()
+    const result = new Map<string, Map<string, ExpenseStatus>>()
+    for (const month of months) {
+      const monthMap = ExpenseStatusMapper.monthToMap(store[month.key])
+      if (monthMap.size > 0) {
+        result.set(month.key, monthMap)
+      }
+    }
+    return result
+  }
+
   async setStatus(month: YearMonth, expenseId: string, status: ExpenseStatus): Promise<void> {
     const store = this.readStore()
     if (!store[month.key]) {

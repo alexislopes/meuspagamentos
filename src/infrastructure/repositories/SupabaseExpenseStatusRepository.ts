@@ -27,6 +27,29 @@ export class SupabaseExpenseStatusRepository implements IExpenseStatusRepository
     return map
   }
 
+  async getStatusesForMonths(months: YearMonth[]): Promise<Map<string, Map<string, ExpenseStatus>>> {
+    const monthKeys = months.map((m) => m.key)
+
+    const { data, error } = await supabase
+      .from('expense_statuses')
+      .select('month, expense_id, status')
+      .in('month', monthKeys)
+
+    if (error) throw new Error(`Failed to fetch statuses: ${error.message}`)
+
+    const result = new Map<string, Map<string, ExpenseStatus>>()
+    for (const row of data as ExpenseStatusRow[]) {
+      if (!Object.values(ExpenseStatus).includes(row.status as ExpenseStatus)) continue
+      let monthMap = result.get(row.month)
+      if (!monthMap) {
+        monthMap = new Map<string, ExpenseStatus>()
+        result.set(row.month, monthMap)
+      }
+      monthMap.set(row.expense_id, row.status as ExpenseStatus)
+    }
+    return result
+  }
+
   async setStatus(month: YearMonth, expenseId: string, status: ExpenseStatus): Promise<void> {
     const { error } = await supabase
       .from('expense_statuses')

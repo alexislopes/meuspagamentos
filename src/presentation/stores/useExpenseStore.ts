@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useNavigationStore } from './useNavigationStore'
 import type { MonthlyExpenseDTO } from '../../application/dto/MonthlyExpenseDTO'
 import type { MonthlySummaryDTO } from '../../application/dto/MonthlySummaryDTO'
+import type { AverageMonthlyCostDTO } from '../../application/dto/AverageMonthlyCostDTO'
 import type { CreateFixedExpenseDTO } from '../../application/dto/CreateFixedExpenseDTO'
 import type { UpdateFixedExpenseDTO } from '../../application/dto/UpdateFixedExpenseDTO'
 import {
@@ -14,6 +15,7 @@ import {
   revertExpenseStatus,
   getMonthlyExpenses,
   getMonthlySummary,
+  getAverageMonthlyCost,
 } from '../../infrastructure/container'
 
 export const useExpenseStore = defineStore('expense', () => {
@@ -30,14 +32,22 @@ export const useExpenseStore = defineStore('expense', () => {
     skippedCount: 0,
   })
 
+  const averageMonthlyCost = ref<AverageMonthlyCostDTO | null>(null)
+
   const loading = ref(false)
 
   async function refresh() {
     loading.value = true
     try {
       const month = navigationStore.currentMonth
-      expenses.value = await getMonthlyExpenses.execute(month)
-      summary.value = await getMonthlySummary.execute(month)
+      const [expensesResult, summaryResult, averageResult] = await Promise.all([
+        getMonthlyExpenses.execute(month),
+        getMonthlySummary.execute(month),
+        getAverageMonthlyCost.execute(),
+      ])
+      expenses.value = expensesResult
+      summary.value = summaryResult
+      averageMonthlyCost.value = averageResult
     } finally {
       loading.value = false
     }
@@ -84,6 +94,7 @@ export const useExpenseStore = defineStore('expense', () => {
   return {
     expenses,
     summary,
+    averageMonthlyCost,
     loading,
     refresh,
     addExpense,

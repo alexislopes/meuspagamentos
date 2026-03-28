@@ -2,6 +2,7 @@
 import { useMonthNavigation } from '../composables/useMonthNavigation'
 import MonthNavigator from '../components/navigation/MonthNavigator.vue'
 import MonthlySummary from '../components/summary/MonthlySummary.vue'
+import AverageMonthlyCostCard from '../components/summary/AverageMonthlyCostCard.vue'
 import ExpenseList from '../components/expense/ExpenseList.vue'
 import { useExpenseStore } from '../stores/useExpenseStore'
 import { storeToRefs } from 'pinia'
@@ -9,11 +10,13 @@ import { storeToRefs } from 'pinia'
 useMonthNavigation()
 
 const expenseStore = useExpenseStore()
-const { expenses, summary } = storeToRefs(expenseStore)
+const { expenses, summary, averageMonthlyCost } = storeToRefs(expenseStore)
 </script>
 
 <template>
   <div class="space-y-6">
+    <AverageMonthlyCostCard v-if="averageMonthlyCost && averageMonthlyCost.monthsWithData > 0" :data="averageMonthlyCost" />
+
     <MonthNavigator />
 
     <div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">

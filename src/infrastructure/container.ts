@@ -8,6 +8,7 @@ import { SkipExpenseUseCase } from '../application/use-cases/SkipExpense'
 import { RevertExpenseStatusUseCase } from '../application/use-cases/RevertExpenseStatus'
 import { GetMonthlyExpensesUseCase } from '../application/use-cases/GetMonthlyExpenses'
 import { GetMonthlySummaryUseCase } from '../application/use-cases/GetMonthlySummary'
+import { GetAverageMonthlyCostUseCase } from '../application/use-cases/GetAverageMonthlyCost'
 
 const expenseRepo = new SupabaseFixedExpenseRepository()
 const statusRepo = new SupabaseExpenseStatusRepository()
@@ -20,3 +21,4 @@ export const skipExpense = new SkipExpenseUseCase(statusRepo)
 export const revertExpenseStatus = new RevertExpenseStatusUseCase(statusRepo)
 export const getMonthlyExpenses = new GetMonthlyExpensesUseCase(expenseRepo, statusRepo)
 export const getMonthlySummary = new GetMonthlySummaryUseCase(expenseRepo, statusRepo)
+export const getAverageMonthlyCost = new GetAverageMonthlyCostUseCase(expenseRepo, statusRepo)
