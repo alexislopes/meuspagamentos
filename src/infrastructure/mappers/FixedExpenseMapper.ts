@@ -1,4 +1,5 @@
 import { FixedExpense } from '../../domain/entities/FixedExpense'
+import { ExpenseContext } from '../../domain/value-objects/ExpenseContext'
 import { Money } from '../../domain/value-objects/Money'
 import { YearMonth } from '../../domain/value-objects/YearMonth'
 
@@ -16,6 +17,7 @@ export interface FixedExpenseJSON {
   dueDay: number
   createdAt: string
   deletedFromMonth: string | null
+  context: ExpenseContext
   revisions?: ExpenseRevisionJSON[]
 }
 
@@ -37,6 +39,7 @@ export class FixedExpenseMapper {
       deletedFromMonth: json.deletedFromMonth
         ? YearMonth.fromKey(json.deletedFromMonth)
         : null,
+      context: json.context,
       revisions,
     })
   }
@@ -49,6 +52,7 @@ export class FixedExpenseMapper {
       dueDay: entity.dueDay,
       createdAt: entity.createdAt.key,
       deletedFromMonth: entity.deletedFromMonth?.key ?? null,
+      context: entity.context,
       revisions: entity.revisions.map((r) => ({
         fromMonth: r.fromMonth.key,
         name: r.name,

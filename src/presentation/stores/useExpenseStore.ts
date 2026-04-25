@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useNavigationStore } from './useNavigationStore'
+import { useContextStore } from './useContextStore'
 import type { MonthlyExpenseDTO } from '../../application/dto/MonthlyExpenseDTO'
 import type { MonthlySummaryDTO } from '../../application/dto/MonthlySummaryDTO'
 import type { AverageMonthlyCostDTO } from '../../application/dto/AverageMonthlyCostDTO'
@@ -20,6 +21,7 @@ import {
 
 export const useExpenseStore = defineStore('expense', () => {
   const navigationStore = useNavigationStore()
+  const contextStore = useContextStore()
 
   const expenses = ref<MonthlyExpenseDTO[]>([])
   const summary = ref<MonthlySummaryDTO>({
@@ -40,10 +42,11 @@ export const useExpenseStore = defineStore('expense', () => {
     loading.value = true
     try {
       const month = navigationStore.currentMonth
+      const context = contextStore.current
       const [expensesResult, summaryResult, averageResult] = await Promise.all([
-        getMonthlyExpenses.execute(month),
-        getMonthlySummary.execute(month),
-        getAverageMonthlyCost.execute(),
+        getMonthlyExpenses.execute(month, context),
+        getMonthlySummary.execute(month, context),
+        getAverageMonthlyCost.execute(context),
       ])
       expenses.value = expensesResult
       summary.value = summaryResult
@@ -53,8 +56,12 @@ export const useExpenseStore = defineStore('expense', () => {
     }
   }
 
-  async function addExpense(dto: CreateFixedExpenseDTO) {
-    await createFixedExpense.execute(dto)
+  watch(() => contextStore.current, () => {
+    refresh()
+  })
+
+  async function addExpense(dto: Omit<CreateFixedExpenseDTO, 'context'>) {
+    await createFixedExpense.execute({ ...dto, context: contextStore.current })
     await refresh()
   }
 

@@ -29,3 +29,27 @@
   --ui-border-muted: oklch(87% 0.008 75 / 0.5);
   --ui-border-accented: oklch(72% 0.015 70 / 0.6);
 }
+
+/* Visão PJ — paleta "Escritório" (azul-aço corporativo) */
+:root[data-context="pj"] {
+  --ui-bg: oklch(96.5% 0.008 240);
+  --ui-bg-muted: oklch(94% 0.01 240);
+  --ui-bg-elevated: oklch(98.5% 0.005 240);
+  --ui-bg-accented: oklch(91% 0.012 240);
+
+  --ui-text-highlighted: oklch(22% 0.025 250);
+  --ui-text: oklch(30% 0.022 250);
+  --ui-text-toned: oklch(42% 0.018 250);
+  --ui-text-muted: oklch(52% 0.015 250);
+  --ui-text-dimmed: oklch(62% 0.012 250);
+
+  --ui-border: oklch(80% 0.012 240 / 0.6);
+  --ui-border-muted: oklch(86% 0.01 240 / 0.5);
+  --ui-border-accented: oklch(70% 0.018 240 / 0.6);
+}
+
+/* Transição suave entre paletas */
+:root,
+body {
+  transition: background-color 240ms ease, color 240ms ease;
+}

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import type { CreateFixedExpenseDTO } from '../../../application/dto/CreateFixedExpenseDTO'
 import { useExpenseStore } from '../../stores/useExpenseStore'
 import { DUE_DAY_OPTIONS } from '../../../shared/constants'
 
@@ -33,13 +32,11 @@ async function handleSubmit() {
   const amount = parseFloat(form.amount.replace(',', '.'))
   if (!form.name.trim() || isNaN(amount) || amount <= 0) return
 
-  const dto: CreateFixedExpenseDTO = {
+  await expenseStore.addExpense({
     name: form.name.trim(),
     amount,
     dueDay: form.dueDay,
-  }
-
-  await expenseStore.addExpense(dto)
+  })
 
   if (props.inline) {
     form.name = ''

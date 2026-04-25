@@ -15,6 +15,7 @@ export class CreateFixedExpenseUseCase {
       dueDay: dto.dueDay,
       createdAt: YearMonth.current(),
       deletedFromMonth: null,
+      context: dto.context,
     })
     await this.expenseRepo.save(expense)
     return expense
