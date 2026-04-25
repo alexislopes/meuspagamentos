@@ -1,6 +1,7 @@
 import type { IFixedExpenseRepository } from '../../domain/repositories/IFixedExpenseRepository'
 import type { IExpenseStatusRepository } from '../../domain/repositories/IExpenseStatusRepository'
 import { MonthlyExpenseService } from '../../domain/services/MonthlyExpenseService'
+import type { ExpenseContext } from '../../domain/value-objects/ExpenseContext'
 import { YearMonth } from '../../domain/value-objects/YearMonth'
 import type { AverageMonthlyCostDTO } from '../dto/AverageMonthlyCostDTO'
 
@@ -12,7 +13,7 @@ export class GetAverageMonthlyCostUseCase {
     private readonly statusRepo: IExpenseStatusRepository,
   ) {}
 
-  async execute(): Promise<AverageMonthlyCostDTO> {
+  async execute(context: ExpenseContext): Promise<AverageMonthlyCostDTO> {
     const current = YearMonth.current()
 
     const months: YearMonth[] = []
@@ -23,7 +24,7 @@ export class GetAverageMonthlyCostUseCase {
     }
 
     const [allExpenses, allStatuses] = await Promise.all([
-      this.expenseRepo.getAll(),
+      this.expenseRepo.getAll(context),
       this.statusRepo.getStatusesForMonths(months),
     ])
 

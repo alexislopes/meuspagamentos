@@ -1,3 +1,4 @@
+import { ExpenseContext } from '../value-objects/ExpenseContext'
 import { Money } from '../value-objects/Money'
 import { YearMonth } from '../value-objects/YearMonth'
 
@@ -15,6 +16,7 @@ export interface FixedExpenseProps {
   dueDay: number
   createdAt: YearMonth
   deletedFromMonth: YearMonth | null
+  context: ExpenseContext
   revisions?: ExpenseRevision[]
 }
 
@@ -24,6 +26,7 @@ export class FixedExpense {
   readonly amount: Money
   readonly dueDay: number
   readonly createdAt: YearMonth
+  readonly context: ExpenseContext
   private _deletedFromMonth: YearMonth | null
   private _revisions: ExpenseRevision[]
 
@@ -40,6 +43,7 @@ export class FixedExpense {
     this.amount = props.amount
     this.dueDay = props.dueDay
     this.createdAt = props.createdAt
+    this.context = props.context
     this._deletedFromMonth = props.deletedFromMonth
     this._revisions = props.revisions ?? []
   }

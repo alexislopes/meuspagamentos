@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useCreateExpense } from '../../composables/useCreateExpense'
 import ExpenseForm from '../expense/ExpenseForm.vue'
+import ContextSwitcher from './ContextSwitcher.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -44,6 +45,7 @@ function handleExpenseSaved() {
       <span class="font-serif text-xl font-semibold text-highlighted tracking-tight">Meus Pagamentos</span>
     </RouterLink>
     <div class="flex items-center gap-2">
+      <ContextSwitcher />
       <UButton
         label="Novo Gasto"
         icon="i-lucide-plus"

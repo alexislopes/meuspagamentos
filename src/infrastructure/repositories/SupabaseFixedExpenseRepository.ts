@@ -1,5 +1,6 @@
 import type { FixedExpense } from '../../domain/entities/FixedExpense'
 import type { IFixedExpenseRepository } from '../../domain/repositories/IFixedExpenseRepository'
+import { ExpenseContext } from '../../domain/value-objects/ExpenseContext'
 import { FixedExpenseMapper } from '../mappers/FixedExpenseMapper'
 import type { FixedExpenseJSON } from '../mappers/FixedExpenseMapper'
 import { supabase } from '../supabase/client'
@@ -11,6 +12,7 @@ interface FixedExpenseRow {
   due_day: number
   created_at_month: string
   deleted_from_month: string | null
+  context: ExpenseContext
   revisions: RevisionRow[]
 }
 
@@ -30,6 +32,7 @@ export class SupabaseFixedExpenseRepository implements IFixedExpenseRepository {
       dueDay: row.due_day,
       createdAt: row.created_at_month,
       deletedFromMonth: row.deleted_from_month,
+      context: row.context,
       revisions: (row.revisions ?? []).map((r) => ({
         fromMonth: r.from_month,
         name: r.name,
@@ -49,6 +52,7 @@ export class SupabaseFixedExpenseRepository implements IFixedExpenseRepository {
       due_day: json.dueDay,
       created_at_month: json.createdAt,
       deleted_from_month: json.deletedFromMonth,
+      context: json.context,
       revisions: (json.revisions ?? []).map((r) => ({
         from_month: r.fromMonth,
         name: r.name,
@@ -58,10 +62,11 @@ export class SupabaseFixedExpenseRepository implements IFixedExpenseRepository {
     }
   }
 
-  async getAll(): Promise<FixedExpense[]> {
+  async getAll(context: ExpenseContext): Promise<FixedExpense[]> {
     const { data, error } = await supabase
       .from('fixed_expenses')
       .select('*')
+      .eq('context', context)
 
     if (error) throw new Error(`Failed to fetch expenses: ${error.message}`)
     return (data as FixedExpenseRow[]).map((row) => this.toDomain(row))
