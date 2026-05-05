@@ -2,13 +2,13 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/useAuthStore'
-import { useCreateExpense } from '../../composables/useCreateExpense'
-import ExpenseForm from '../expense/ExpenseForm.vue'
+import { useCreateEntry } from '../../composables/useCreateEntry'
+import EntryForm from '../entry/EntryForm.vue'
 import ContextSwitcher from './ContextSwitcher.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { showCreateSlideover, close: closeCreateSlideover } = useCreateExpense()
+const { showCreateSlideover, close: closeCreateSlideover } = useCreateEntry()
 
 const userInitial = computed(() => {
   const email = authStore.user?.email ?? ''
@@ -33,7 +33,7 @@ async function handleLogout() {
   router.push({ name: 'login' })
 }
 
-function handleExpenseSaved() {
+function handleEntrySaved() {
   closeCreateSlideover()
 }
 </script>
@@ -47,7 +47,7 @@ function handleExpenseSaved() {
     <div class="flex items-center gap-2">
       <ContextSwitcher />
       <UButton
-        label="Novo Gasto"
+        label="Novo lançamento"
         icon="i-lucide-plus"
         size="sm"
         @click="showCreateSlideover = true"
@@ -60,11 +60,11 @@ function handleExpenseSaved() {
 
   <USlideover
     v-model:open="showCreateSlideover"
-    title="Novo Gasto Fixo"
-    description="Adicione um novo gasto fixo mensal"
+    title="Novo lançamento"
+    description="Adicione um novo gasto ou receita"
   >
     <template #body>
-      <ExpenseForm inline @saved="handleExpenseSaved" />
+      <EntryForm inline @saved="handleEntrySaved" />
     </template>
   </USlideover>
 </template>

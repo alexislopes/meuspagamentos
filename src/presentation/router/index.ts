@@ -19,9 +19,9 @@ const routes = [
         component: () => import('../pages/DashboardPage.vue'),
       },
       {
-        path: 'expenses/new',
-        name: 'create-expense',
-        component: () => import('../pages/CreateExpensePage.vue'),
+        path: 'entries/new',
+        name: 'create-entry',
+        component: () => import('../pages/CreateEntryPage.vue'),
       },
     ],
   },

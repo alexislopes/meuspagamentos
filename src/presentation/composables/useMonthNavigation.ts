@@ -1,24 +1,24 @@
 import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNavigationStore } from '../stores/useNavigationStore'
-import { useExpenseStore } from '../stores/useExpenseStore'
+import { useEntryStore } from '../stores/useEntryStore'
 
 export function useMonthNavigation() {
   const navigationStore = useNavigationStore()
-  const expenseStore = useExpenseStore()
+  const entryStore = useEntryStore()
   const { currentMonth } = storeToRefs(navigationStore)
 
   watch(
     currentMonth,
     async () => {
-      await expenseStore.refresh()
+      await entryStore.refresh()
     },
     { immediate: true },
   )
 
   return {
     ...navigationStore,
-    expenses: expenseStore.expenses,
-    summary: expenseStore.summary,
+    entries: entryStore.entries,
+    summary: entryStore.summary,
   }
 }

@@ -1,33 +1,42 @@
-import type { IFixedExpenseRepository } from '../../domain/repositories/IFixedExpenseRepository'
-import type { IExpenseStatusRepository } from '../../domain/repositories/IExpenseStatusRepository'
-import { MonthlyExpenseService } from '../../domain/services/MonthlyExpenseService'
+import type { IEntryRepository } from '../../domain/repositories/IEntryRepository'
+import type { IEntryStatusRepository } from '../../domain/repositories/IEntryStatusRepository'
+import { MonthlyEntryService } from '../../domain/services/MonthlyEntryService'
 import type { ExpenseContext } from '../../domain/value-objects/ExpenseContext'
-import { ExpenseStatus } from '../../domain/value-objects/ExpenseStatus'
+import { EntryStatus } from '../../domain/value-objects/EntryStatus'
 import type { YearMonth } from '../../domain/value-objects/YearMonth'
 import type { MonthlySummaryDTO } from '../dto/MonthlySummaryDTO'
 
 export class GetMonthlySummaryUseCase {
-  private readonly domainService = new MonthlyExpenseService()
+  private readonly domainService = new MonthlyEntryService()
 
   constructor(
-    private readonly expenseRepo: IFixedExpenseRepository,
-    private readonly statusRepo: IExpenseStatusRepository,
+    private readonly entryRepo: IEntryRepository,
+    private readonly statusRepo: IEntryStatusRepository,
   ) {}
 
   async execute(month: YearMonth, context: ExpenseContext): Promise<MonthlySummaryDTO> {
-    const allExpenses = await this.expenseRepo.getAll(context)
+    const allEntries = await this.entryRepo.getAll(context)
     const statuses = await this.statusRepo.getStatusesForMonth(month)
-    const views = this.domainService.buildMonthView(allExpenses, month, statuses)
+    const views = this.domainService.buildMonthView(allEntries, month, statuses)
     const summary = this.domainService.computeSummary(views)
 
+    const incomeViews = views.filter((v) => v.kind === 'income')
+    const expenseViews = views.filter((v) => v.kind === 'expense')
+    const notSkipped = views.filter((v) => v.status !== EntryStatus.SKIPPED)
+
     return {
-      totalInCents: summary.total,
-      totalPaidInCents: summary.totalPaid,
-      totalPendingInCents: summary.totalPending,
-      expenseCount: views.filter((v) => v.status !== ExpenseStatus.SKIPPED).length,
-      paidCount: views.filter((v) => v.status === ExpenseStatus.PAID).length,
-      pendingCount: views.filter((v) => v.status === ExpenseStatus.PENDING).length,
-      skippedCount: views.filter((v) => v.status === ExpenseStatus.SKIPPED).length,
+      totalIncomeInCents: summary.totalIncome,
+      totalExpenseInCents: summary.totalExpense,
+      confirmedIncomeInCents: summary.confirmedIncome,
+      pendingIncomeInCents: summary.pendingIncome,
+      confirmedExpenseInCents: summary.confirmedExpense,
+      pendingExpenseInCents: summary.pendingExpense,
+      balanceInCents: summary.balance,
+      incomeCount: incomeViews.filter((v) => v.status !== EntryStatus.SKIPPED).length,
+      expenseCount: expenseViews.filter((v) => v.status !== EntryStatus.SKIPPED).length,
+      confirmedCount: notSkipped.filter((v) => v.status === EntryStatus.CONFIRMED).length,
+      pendingCount: notSkipped.filter((v) => v.status === EntryStatus.PENDING).length,
+      skippedCount: views.filter((v) => v.status === EntryStatus.SKIPPED).length,
     }
   }
 }
