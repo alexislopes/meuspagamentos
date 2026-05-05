@@ -3,9 +3,9 @@ import type { IEntryStatusRepository } from '../../domain/repositories/IEntrySta
 import { MonthlyEntryService } from '../../domain/services/MonthlyEntryService'
 import type { ExpenseContext } from '../../domain/value-objects/ExpenseContext'
 import { YearMonth } from '../../domain/value-objects/YearMonth'
-import type { AverageMonthlyCostDTO } from '../dto/AverageMonthlyCostDTO'
+import type { AverageMonthlyIncomeDTO } from '../dto/AverageMonthlyIncomeDTO'
 
-export class GetAverageMonthlyCostUseCase {
+export class GetAverageMonthlyIncomeUseCase {
   private readonly domainService = new MonthlyEntryService()
 
   constructor(
@@ -13,7 +13,7 @@ export class GetAverageMonthlyCostUseCase {
     private readonly statusRepo: IEntryStatusRepository,
   ) {}
 
-  async execute(context: ExpenseContext): Promise<AverageMonthlyCostDTO> {
+  async execute(context: ExpenseContext): Promise<AverageMonthlyIncomeDTO> {
     const current = YearMonth.current()
 
     const months: YearMonth[] = []
@@ -36,8 +36,8 @@ export class GetAverageMonthlyCostUseCase {
       const views = this.domainService.buildMonthView(allEntries, month, statuses)
       const summary = this.domainService.computeSummary(views)
 
-      if (summary.totalExpense > 0) {
-        totalCents += summary.totalExpense
+      if (summary.totalIncome > 0) {
+        totalCents += summary.totalIncome
         monthsWithData++
       }
     }
