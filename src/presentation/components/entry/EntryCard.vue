@@ -52,7 +52,7 @@ const dayPillText = computed(() => isConfirmed.value ? 'text-success' : 'text-hi
 const amountSign = computed(() => isIncome.value ? '+' : '−')
 const amountColor = computed(() => {
   if (isConfirmed.value) return 'text-muted'
-  return isIncome.value ? 'font-semibold text-success' : 'font-semibold text-toned'
+  return isIncome.value ? 'font-semibold text-success' : 'font-semibold text-error'
 })
 
 const deleteMessage = computed(() => {
@@ -129,7 +129,7 @@ async function handleEdit() {
       <div class="flex items-center gap-2">
         <UIcon
           :name="isIncome ? 'i-lucide-arrow-down-left' : 'i-lucide-arrow-up-right'"
-          :class="isIncome ? 'text-success' : 'text-warning'"
+          :class="isIncome ? 'text-success' : 'text-error'"
           class="text-sm shrink-0"
         />
         <h3 class="text-sm font-medium truncate" :class="isConfirmed ? 'line-through text-muted' : 'text-highlighted'">

@@ -31,7 +31,7 @@ const allConfirmed = computed(() => totalCount.value > 0 && props.summary.pendin
       <p class="text-xs font-medium text-dimmed uppercase tracking-wider">Saldo do mês</p>
       <p
         class="text-3xl font-bold tracking-tight mt-1 tabular-nums"
-        :class="balanceIsPositive ? 'text-success' : 'text-warning'"
+        :class="balanceIsPositive ? 'text-success' : 'text-error'"
       >
         {{ balanceFormatted }}
       </p>
@@ -50,10 +50,10 @@ const allConfirmed = computed(() => totalCount.value > 0 && props.summary.pendin
       </div>
       <div class="text-right">
         <p class="text-xs text-dimmed flex items-center gap-1 justify-end">
-          <UIcon name="i-lucide-arrow-up-right" class="text-warning" />
+          <UIcon name="i-lucide-arrow-up-right" class="text-error" />
           Saídas
         </p>
-        <p class="text-base font-semibold text-warning tabular-nums mt-0.5">
+        <p class="text-base font-semibold text-error tabular-nums mt-0.5">
           {{ formatCents(summary.totalExpenseInCents) }}
         </p>
       </div>

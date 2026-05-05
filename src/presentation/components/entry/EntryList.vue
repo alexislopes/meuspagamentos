@@ -46,7 +46,7 @@ function formatSigned(cents: number): string {
           <div class="flex-1 border-b border-muted" />
           <span
             class="text-xs font-medium tabular-nums"
-            :class="firstHalfNet >= 0 ? 'text-success' : 'text-warning'"
+            :class="firstHalfNet >= 0 ? 'text-success' : 'text-error'"
           >{{ formatSigned(firstHalfNet) }}</span>
         </div>
         <div class="space-y-2">
