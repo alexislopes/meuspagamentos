@@ -7,3 +7,5 @@ storybook-static
 nul
 
 .claude/*.local.json
+components.d.ts
+.mcp.json
