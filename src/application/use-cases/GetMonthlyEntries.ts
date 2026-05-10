@@ -15,8 +15,11 @@ export class GetMonthlyEntriesUseCase {
 
   async execute(month: YearMonth, context: ExpenseContext): Promise<MonthlyEntryDTO[]> {
     const allEntries = await this.entryRepo.getAll(context)
-    const statuses = await this.statusRepo.getStatusesForMonth(month)
-    const views = this.domainService.buildMonthView(allEntries, month, statuses)
+    const [statuses, snapshots] = await Promise.all([
+      this.statusRepo.getStatusesForMonth(month),
+      this.statusRepo.getSnapshotsForMonth(month),
+    ])
+    const views = this.domainService.buildMonthView(allEntries, month, statuses, snapshots)
 
     return views.map((v) => ({
       entryId: v.entryId,
@@ -25,6 +28,8 @@ export class GetMonthlyEntriesUseCase {
       dueDay: v.dueDay,
       kind: v.kind,
       status: v.status,
+      valueType: v.valueType,
+      formulaDescription: v.formulaDescription,
     }))
   }
 }

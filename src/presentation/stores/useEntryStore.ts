@@ -8,6 +8,10 @@ import type { AverageMonthlyCostDTO } from '../../application/dto/AverageMonthly
 import type { AverageMonthlyIncomeDTO } from '../../application/dto/AverageMonthlyIncomeDTO'
 import type { CreateEntryDTO } from '../../application/dto/CreateEntryDTO'
 import type { UpdateEntryDTO } from '../../application/dto/UpdateEntryDTO'
+
+type DistOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
+type AddEntryInput = DistOmit<CreateEntryDTO, 'context'>
+type EditEntryInput = DistOmit<UpdateEntryDTO, 'effectiveFromMonth'>
 import {
   createEntry,
   updateEntry,
@@ -70,17 +74,16 @@ export const useEntryStore = defineStore('entry', () => {
     refresh()
   })
 
-  async function addEntry(dto: Omit<CreateEntryDTO, 'context'>) {
-    await createEntry.execute({ ...dto, context: contextStore.current })
+  async function addEntry(dto: AddEntryInput) {
+    const withCtx = { ...dto, context: contextStore.current } as CreateEntryDTO
+    await createEntry.execute(withCtx)
     await refresh()
   }
 
-  async function editEntry(dto: Omit<UpdateEntryDTO, 'effectiveFromMonth'>) {
+  async function editEntry(dto: EditEntryInput) {
     const month = navigationStore.currentMonth
-    await updateEntry.execute({
-      ...dto,
-      effectiveFromMonth: month.key,
-    })
+    const full = { ...dto, effectiveFromMonth: month.key } as UpdateEntryDTO
+    await updateEntry.execute(full)
     await refresh()
   }
 

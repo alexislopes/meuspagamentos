@@ -1,5 +1,10 @@
 import type { Money } from '../value-objects/Money'
-import type { EntryKind, EntryStatus } from '../value-objects/EntryStatus'
+import type { ExpenseContext } from '../value-objects/ExpenseContext'
+import type {
+  EntryKind,
+  EntryStatus,
+  EntryValueType,
+} from '../value-objects/EntryStatus'
 
 export interface MonthlyEntryView {
   readonly entryId: string
@@ -8,4 +13,7 @@ export interface MonthlyEntryView {
   readonly dueDay: number
   readonly kind: EntryKind
   readonly status: EntryStatus
+  readonly context: ExpenseContext
+  readonly valueType: EntryValueType
+  readonly formulaDescription?: string
 }

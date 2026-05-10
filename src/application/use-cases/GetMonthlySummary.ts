@@ -16,8 +16,11 @@ export class GetMonthlySummaryUseCase {
 
   async execute(month: YearMonth, context: ExpenseContext): Promise<MonthlySummaryDTO> {
     const allEntries = await this.entryRepo.getAll(context)
-    const statuses = await this.statusRepo.getStatusesForMonth(month)
-    const views = this.domainService.buildMonthView(allEntries, month, statuses)
+    const [statuses, snapshots] = await Promise.all([
+      this.statusRepo.getStatusesForMonth(month),
+      this.statusRepo.getSnapshotsForMonth(month),
+    ])
+    const views = this.domainService.buildMonthView(allEntries, month, statuses, snapshots)
     const summary = this.domainService.computeSummary(views)
 
     const incomeViews = views.filter((v) => v.kind === 'income')

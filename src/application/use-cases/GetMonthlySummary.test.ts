@@ -6,7 +6,7 @@ import type { IEntryStatusRepository } from '../../domain/repositories/IEntrySta
 import { Money } from '../../domain/value-objects/Money'
 import { YearMonth } from '../../domain/value-objects/YearMonth'
 import { ExpenseContext } from '../../domain/value-objects/ExpenseContext'
-import { EntryStatus } from '../../domain/value-objects/EntryStatus'
+import { EntryStatus, EntryValueType } from '../../domain/value-objects/EntryStatus'
 
 class StubEntryRepo implements IEntryRepository {
   constructor(private entries: Entry[]) {}
@@ -20,6 +20,7 @@ class StubStatusRepo implements IEntryStatusRepository {
   constructor(private statuses: Map<string, EntryStatus> = new Map()) {}
   async getStatusesForMonth() { return this.statuses }
   async getStatusesForMonths() { return new Map() }
+  async getSnapshotsForMonth() { return new Map<string, number>() }
   async setStatus() {}
   async removeStatus() {}
 }
@@ -37,6 +38,7 @@ function makeEntry(id: string, kind: 'income' | 'expense', cents: number, dueDay
     createdAt: M(2026, 1),
     deletedFromMonth: null,
     context: ExpenseContext.PF,
+    valueType: EntryValueType.FIXED,
   })
 }
 

@@ -5,6 +5,9 @@ import { EntryStatusMapper } from '../mappers/EntryStatusMapper'
 import type { StatusStoreJSON } from '../mappers/EntryStatusMapper'
 
 const STORAGE_KEY = 'meuspagamentos:entry-statuses'
+const SNAPSHOT_KEY = 'meuspagamentos:entry-status-snapshots'
+
+type SnapshotStoreJSON = Record<string, Record<string, number>>
 
 export class LocalStorageEntryStatusRepository implements IEntryStatusRepository {
   private readStore(): StatusStoreJSON {
@@ -19,6 +22,20 @@ export class LocalStorageEntryStatusRepository implements IEntryStatusRepository
 
   private writeStore(store: StatusStoreJSON): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
+  }
+
+  private readSnapshots(): SnapshotStoreJSON {
+    const raw = localStorage.getItem(SNAPSHOT_KEY)
+    if (!raw) return {}
+    try {
+      return JSON.parse(raw) as SnapshotStoreJSON
+    } catch {
+      return {}
+    }
+  }
+
+  private writeSnapshots(store: SnapshotStoreJSON): void {
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(store))
   }
 
   async getStatusesForMonth(month: YearMonth): Promise<Map<string, EntryStatus>> {
@@ -38,13 +55,36 @@ export class LocalStorageEntryStatusRepository implements IEntryStatusRepository
     return result
   }
 
-  async setStatus(month: YearMonth, entryId: string, status: EntryStatus): Promise<void> {
-    const store = this.readStore()
-    if (!store[month.key]) {
-      store[month.key] = {}
+  async getSnapshotsForMonth(month: YearMonth): Promise<Map<string, number>> {
+    const store = this.readSnapshots()
+    const monthData = store[month.key] ?? {}
+    const map = new Map<string, number>()
+    for (const [entryId, cents] of Object.entries(monthData)) {
+      map.set(entryId, cents)
     }
+    return map
+  }
+
+  async setStatus(
+    month: YearMonth,
+    entryId: string,
+    status: EntryStatus,
+    snapshotAmountCents?: number,
+  ): Promise<void> {
+    const store = this.readStore()
+    if (!store[month.key]) store[month.key] = {}
     store[month.key][entryId] = status
     this.writeStore(store)
+
+    const snapshots = this.readSnapshots()
+    if (snapshotAmountCents !== undefined) {
+      if (!snapshots[month.key]) snapshots[month.key] = {}
+      snapshots[month.key][entryId] = snapshotAmountCents
+    } else if (snapshots[month.key]) {
+      delete snapshots[month.key][entryId]
+      if (Object.keys(snapshots[month.key]).length === 0) delete snapshots[month.key]
+    }
+    this.writeSnapshots(snapshots)
   }
 
   async removeStatus(month: YearMonth, entryId: string): Promise<void> {
@@ -55,6 +95,12 @@ export class LocalStorageEntryStatusRepository implements IEntryStatusRepository
         delete store[month.key]
       }
       this.writeStore(store)
+    }
+    const snapshots = this.readSnapshots()
+    if (snapshots[month.key]) {
+      delete snapshots[month.key][entryId]
+      if (Object.keys(snapshots[month.key]).length === 0) delete snapshots[month.key]
+      this.writeSnapshots(snapshots)
     }
   }
 }

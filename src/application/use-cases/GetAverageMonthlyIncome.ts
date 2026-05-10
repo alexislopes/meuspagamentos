@@ -33,7 +33,8 @@ export class GetAverageMonthlyIncomeUseCase {
 
     for (const month of months) {
       const statuses = allStatuses.get(month.key) ?? new Map()
-      const views = this.domainService.buildMonthView(allEntries, month, statuses)
+      const snapshots = await this.statusRepo.getSnapshotsForMonth(month)
+      const views = this.domainService.buildMonthView(allEntries, month, statuses, snapshots)
       const summary = this.domainService.computeSummary(views)
 
       if (summary.totalIncome > 0) {
