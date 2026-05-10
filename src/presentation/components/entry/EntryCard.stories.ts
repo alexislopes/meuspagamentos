@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import EntryCard from './EntryCard.vue'
-import { EntryStatus } from '../../../domain/value-objects/EntryStatus'
+import { EntryStatus, EntryValueType } from '../../../domain/value-objects/EntryStatus'
 import type { MonthlyEntryDTO } from '../../../application/dto/MonthlyEntryDTO'
 
 function entry(overrides: Partial<MonthlyEntryDTO> = {}): MonthlyEntryDTO {
@@ -11,6 +11,8 @@ function entry(overrides: Partial<MonthlyEntryDTO> = {}): MonthlyEntryDTO {
     dueDay: overrides.dueDay ?? 5,
     kind: overrides.kind ?? 'expense',
     status: overrides.status ?? EntryStatus.PENDING,
+    valueType: overrides.valueType ?? EntryValueType.FIXED,
+    formulaDescription: overrides.formulaDescription,
   }
 }
 
@@ -48,6 +50,51 @@ export const LongName: Story = {
     entry: entry({
       name: 'Plano de saúde corporativo da família com cobertura ampliada',
       amountInCents: 1234500,
+    }),
+  },
+}
+
+export const RelativePending: Story = {
+  args: {
+    entry: entry({
+      entryId: 'rel1',
+      name: 'Imposto faturamento',
+      amountInCents: 24000,
+      dueDay: 20,
+      kind: 'expense',
+      status: EntryStatus.PENDING,
+      valueType: EntryValueType.RELATIVE,
+      formulaDescription: '20% de receitas',
+    }),
+  },
+}
+
+export const RelativeConfirmedSnapshot: Story = {
+  args: {
+    entry: entry({
+      entryId: 'rel2',
+      name: 'Imposto faturamento',
+      amountInCents: 18000,
+      dueDay: 20,
+      kind: 'expense',
+      status: EntryStatus.CONFIRMED,
+      valueType: EntryValueType.RELATIVE,
+      formulaDescription: '20% de receitas',
+    }),
+  },
+}
+
+export const RelativeMultiTerm: Story = {
+  args: {
+    entry: entry({
+      entryId: 'rel3',
+      name: 'PIS/COFINS',
+      amountInCents: 4800,
+      dueDay: 15,
+      kind: 'expense',
+      status: EntryStatus.PENDING,
+      valueType: EntryValueType.RELATIVE,
+      formulaDescription: '6% de (receitas − 1 item(ns))',
     }),
   },
 }

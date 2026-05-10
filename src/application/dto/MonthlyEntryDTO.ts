@@ -1,4 +1,8 @@
-import type { EntryKind, EntryStatus } from '../../domain/value-objects/EntryStatus'
+import type {
+  EntryKind,
+  EntryStatus,
+  EntryValueType,
+} from '../../domain/value-objects/EntryStatus'
 
 export interface MonthlyEntryDTO {
   entryId: string
@@ -7,4 +11,6 @@ export interface MonthlyEntryDTO {
   dueDay: number
   kind: EntryKind
   status: EntryStatus
+  valueType: EntryValueType
+  formulaDescription?: string
 }

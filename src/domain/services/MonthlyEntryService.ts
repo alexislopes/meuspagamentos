@@ -1,7 +1,10 @@
 import type { Entry } from '../entities/Entry'
 import type { MonthlyEntryView } from '../entities/MonthlyEntryView'
-import { EntryStatus } from '../value-objects/EntryStatus'
+import { EntryStatus, EntryValueType } from '../value-objects/EntryStatus'
 import type { YearMonth } from '../value-objects/YearMonth'
+import { FormulaResolver } from './FormulaResolver'
+import { Money } from '../value-objects/Money'
+import { describeFormula } from './formulaDescription'
 
 export interface MonthlySummary {
   totalIncome: number
@@ -14,25 +17,65 @@ export interface MonthlySummary {
 }
 
 export class MonthlyEntryService {
+  private readonly resolver = new FormulaResolver()
+
   buildMonthView(
     allEntries: Entry[],
     month: YearMonth,
     statusOverrides: Map<string, EntryStatus>,
+    snapshotsCents: Map<string, number>,
   ): MonthlyEntryView[] {
-    return allEntries
-      .filter((entry) => entry.isActiveInMonth(month))
+    const active = allEntries.filter((e) => e.isActiveInMonth(month))
+
+    const fixedViews: MonthlyEntryView[] = active
+      .filter((e) => e.valueType === EntryValueType.FIXED)
       .map((entry) => {
-        const values = entry.getValuesForMonth(month)
+        const v = entry.getValuesForMonth(month)
+        if (v.valueType !== EntryValueType.FIXED) {
+          throw new Error('expected FIXED values')
+        }
         return {
           entryId: entry.id,
-          name: values.name,
-          amount: values.amount,
-          dueDay: values.dueDay,
+          name: v.name,
+          amount: v.amount,
+          dueDay: v.dueDay,
           kind: entry.kind,
           status: statusOverrides.get(entry.id) ?? EntryStatus.PENDING,
+          context: entry.context,
+          valueType: EntryValueType.FIXED,
         }
       })
-      .sort((a, b) => a.dueDay - b.dueDay)
+
+    const relativeViews: MonthlyEntryView[] = active
+      .filter((e) => e.valueType === EntryValueType.RELATIVE)
+      .map((entry) => {
+        const v = entry.getValuesForMonth(month)
+        if (v.valueType !== EntryValueType.RELATIVE) {
+          throw new Error('expected RELATIVE values')
+        }
+        const status = statusOverrides.get(entry.id) ?? EntryStatus.PENDING
+        const snapshot = snapshotsCents.get(entry.id)
+        const amount = (status === EntryStatus.CONFIRMED && snapshot !== undefined)
+          ? Money.fromCents(snapshot)
+          : this.resolver.resolve({
+              formula: v.formula,
+              ownerContext: entry.context,
+              fixedViews,
+            })
+        return {
+          entryId: entry.id,
+          name: v.name,
+          amount,
+          dueDay: v.dueDay,
+          kind: entry.kind,
+          status,
+          context: entry.context,
+          valueType: EntryValueType.RELATIVE,
+          formulaDescription: describeFormula(v.formula),
+        }
+      })
+
+    return [...fixedViews, ...relativeViews].sort((a, b) => a.dueDay - b.dueDay)
   }
 
   computeSummary(views: MonthlyEntryView[]): MonthlySummary {
@@ -46,7 +89,6 @@ export class MonthlyEntryService {
     for (const v of views) {
       if (v.status === EntryStatus.SKIPPED) continue
       const cents = v.amount.inCents
-
       if (v.kind === 'income') {
         totalIncome += cents
         if (v.status === EntryStatus.CONFIRMED) confirmedIncome += cents

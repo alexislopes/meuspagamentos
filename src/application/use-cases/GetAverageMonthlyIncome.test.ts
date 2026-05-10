@@ -16,9 +16,12 @@ class StubEntryRepo implements IEntryRepository {
   async update() {}
 }
 
+import { EntryValueType } from '../../domain/value-objects/EntryStatus'
+
 class StubStatusRepo implements IEntryStatusRepository {
   async getStatusesForMonth() { return new Map() }
   async getStatusesForMonths() { return new Map() }
+  async getSnapshotsForMonth() { return new Map<string, number>() }
   async setStatus() {}
   async removeStatus() {}
 }
@@ -34,6 +37,7 @@ function makeEntry(kind: 'income' | 'expense', cents: number, createdAt: YearMon
     createdAt,
     deletedFromMonth: null,
     context: ExpenseContext.PF,
+    valueType: EntryValueType.FIXED,
   })
 }
 

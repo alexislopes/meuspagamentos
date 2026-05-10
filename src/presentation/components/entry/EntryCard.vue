@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue'
 import type { MonthlyEntryDTO } from '../../../application/dto/MonthlyEntryDTO'
-import { EntryStatus } from '../../../domain/value-objects/EntryStatus'
+import { EntryStatus, EntryValueType } from '../../../domain/value-objects/EntryStatus'
 import { useCurrency } from '../../composables/useCurrency'
 import { useEntryStore } from '../../stores/useEntryStore'
 import EntryStatusBadge from './EntryStatusBadge.vue'
@@ -62,18 +62,24 @@ const deleteMessage = computed(() => {
 
 const editTitle = computed(() => isIncome.value ? 'Editar receita' : 'Editar gasto')
 
-const secondaryActions = computed(() => [
-  [{
-    label: 'Editar',
-    icon: 'i-lucide-pencil',
-    onSelect: () => { showEditModal.value = true },
-  }, {
-    label: 'Excluir',
-    icon: 'i-lucide-trash-2',
-    color: 'error' as const,
-    onSelect: () => { showDeleteModal.value = true },
-  }],
-])
+const secondaryActions = computed(() => {
+  const editItem = props.entry.valueType === EntryValueType.FIXED
+    ? [{
+        label: 'Editar',
+        icon: 'i-lucide-pencil',
+        onSelect: () => { showEditModal.value = true },
+      }]
+    : []
+  return [[
+    ...editItem,
+    {
+      label: 'Excluir',
+      icon: 'i-lucide-trash-2',
+      color: 'error' as const,
+      onSelect: () => { showDeleteModal.value = true },
+    },
+  ]]
+})
 
 async function handleConfirm() {
   await entryStore.markAsConfirmed(props.entry.entryId)
@@ -97,6 +103,7 @@ async function handleEdit() {
   if (!editForm.name.trim() || isNaN(amount) || amount <= 0) return
 
   await entryStore.editEntry({
+    valueType: EntryValueType.FIXED,
     entryId: props.entry.entryId,
     name: editForm.name.trim(),
     amount,
@@ -136,9 +143,18 @@ async function handleEdit() {
           {{ entry.name }}
         </h3>
         <EntryStatusBadge v-if="!isPending" :status="entry.status" :kind="entry.kind" />
+        <span
+          v-if="entry.valueType === EntryValueType.RELATIVE"
+          class="text-[10px] px-1.5 py-0.5 rounded bg-info/10 text-info uppercase tracking-wide"
+        >
+          calculado
+        </span>
       </div>
       <span class="text-sm tabular-nums" :class="amountColor">
         {{ amountSign }} {{ formatCents(entry.amountInCents) }}
+      </span>
+      <span v-if="entry.formulaDescription" class="block text-xs text-dimmed">
+        {{ entry.formulaDescription }}
       </span>
     </div>
 

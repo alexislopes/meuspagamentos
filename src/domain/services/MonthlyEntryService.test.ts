@@ -4,7 +4,8 @@ import { Entry } from '../entities/Entry'
 import { Money } from '../value-objects/Money'
 import { YearMonth } from '../value-objects/YearMonth'
 import { ExpenseContext } from '../value-objects/ExpenseContext'
-import { EntryStatus } from '../value-objects/EntryStatus'
+import { EntryStatus, EntryValueType, FormulaSetType, FormulaTermSign } from '../value-objects/EntryStatus'
+import type { EntryFormula } from '../value-objects/EntryFormula'
 
 const M = (year: number, month: number) => YearMonth.of(year, month)
 
@@ -28,6 +29,7 @@ function makeEntry(overrides: Partial<{
     createdAt: overrides.createdAt ?? M(2026, 1),
     deletedFromMonth: overrides.deletedFromMonth ?? null,
     context: ExpenseContext.PF,
+    valueType: EntryValueType.FIXED,
   })
 }
 
@@ -40,7 +42,7 @@ describe('MonthlyEntryService.buildMonthView', () => {
       makeEntry({ id: 'b', dueDay: 5, kind: 'income' }),
       makeEntry({ id: 'c', dueDay: 10, kind: 'expense', createdAt: M(2027, 1) }),
     ]
-    const views = service.buildMonthView(entries, M(2026, 6), new Map())
+    const views = service.buildMonthView(entries, M(2026, 6), new Map(), new Map())
     expect(views.map((v) => v.entryId)).toEqual(['b', 'a'])
   })
 
@@ -49,7 +51,7 @@ describe('MonthlyEntryService.buildMonthView', () => {
       makeEntry({ id: 'a', kind: 'income' }),
       makeEntry({ id: 'b', kind: 'expense' }),
     ]
-    const views = service.buildMonthView(entries, M(2026, 6), new Map())
+    const views = service.buildMonthView(entries, M(2026, 6), new Map(), new Map())
     expect(views.find((v) => v.entryId === 'a')?.kind).toBe('income')
     expect(views.find((v) => v.entryId === 'b')?.kind).toBe('expense')
   })
@@ -60,7 +62,7 @@ describe('MonthlyEntryService.buildMonthView', () => {
       makeEntry({ id: 'b' }),
     ]
     const overrides = new Map([['a', EntryStatus.CONFIRMED]])
-    const views = service.buildMonthView(entries, M(2026, 6), overrides)
+    const views = service.buildMonthView(entries, M(2026, 6), overrides, new Map())
     expect(views.find((v) => v.entryId === 'a')?.status).toBe(EntryStatus.CONFIRMED)
     expect(views.find((v) => v.entryId === 'b')?.status).toBe(EntryStatus.PENDING)
   })
@@ -69,9 +71,9 @@ describe('MonthlyEntryService.buildMonthView', () => {
     const entries = [
       makeEntry({ id: 'oneoff', recurrence: 'once', createdAt: M(2026, 6), kind: 'income' }),
     ]
-    expect(service.buildMonthView(entries, M(2026, 5), new Map())).toEqual([])
-    expect(service.buildMonthView(entries, M(2026, 6), new Map())).toHaveLength(1)
-    expect(service.buildMonthView(entries, M(2026, 7), new Map())).toEqual([])
+    expect(service.buildMonthView(entries, M(2026, 5), new Map(), new Map())).toEqual([])
+    expect(service.buildMonthView(entries, M(2026, 6), new Map(), new Map())).toHaveLength(1)
+    expect(service.buildMonthView(entries, M(2026, 7), new Map(), new Map())).toEqual([])
   })
 })
 
@@ -84,7 +86,7 @@ describe('MonthlyEntryService.computeSummary', () => {
       makeEntry({ id: 'e1', kind: 'expense', amountCents: 150000 }),
       makeEntry({ id: 'e2', kind: 'expense', amountCents: 50000 }),
     ]
-    const views = service.buildMonthView(entries, M(2026, 6), new Map())
+    const views = service.buildMonthView(entries, M(2026, 6), new Map(), new Map())
     const s = service.computeSummary(views)
     expect(s.totalIncome).toBe(500000)
     expect(s.totalExpense).toBe(200000)
@@ -100,7 +102,7 @@ describe('MonthlyEntryService.computeSummary', () => {
       ['i1', EntryStatus.SKIPPED],
       ['e1', EntryStatus.SKIPPED],
     ])
-    const views = service.buildMonthView(entries, M(2026, 6), overrides)
+    const views = service.buildMonthView(entries, M(2026, 6), overrides, new Map())
     const s = service.computeSummary(views)
     expect(s.totalIncome).toBe(0)
     expect(s.totalExpense).toBe(0)
@@ -118,7 +120,7 @@ describe('MonthlyEntryService.computeSummary', () => {
       ['i1', EntryStatus.CONFIRMED],
       ['e2', EntryStatus.CONFIRMED],
     ])
-    const views = service.buildMonthView(entries, M(2026, 6), overrides)
+    const views = service.buildMonthView(entries, M(2026, 6), overrides, new Map())
     const s = service.computeSummary(views)
     expect(s.confirmedIncome).toBe(300)
     expect(s.pendingIncome).toBe(700)
@@ -131,8 +133,72 @@ describe('MonthlyEntryService.computeSummary', () => {
       makeEntry({ id: 'i1', kind: 'income', amountCents: 100 }),
       makeEntry({ id: 'e1', kind: 'expense', amountCents: 500 }),
     ]
-    const views = service.buildMonthView(entries, M(2026, 6), new Map())
+    const views = service.buildMonthView(entries, M(2026, 6), new Map(), new Map())
     const s = service.computeSummary(views)
     expect(s.balance).toBe(-400)
+  })
+})
+
+describe('MonthlyEntryService.buildMonthView (relatives)', () => {
+  const svc = new MonthlyEntryService()
+  const month = M(2026, 6)
+  const formula: EntryFormula = {
+    terms: [{ set: { type: FormulaSetType.ALL, kind: 'income' }, sign: FormulaTermSign.POSITIVE }],
+    percentage: 10,
+  }
+
+  function pjIncome(id: string, cents: number) {
+    return new Entry({
+      id,
+      name: id,
+      amount: Money.fromCents(cents),
+      dueDay: 5,
+      kind: 'income',
+      recurrence: 'monthly',
+      createdAt: M(2026, 1),
+      deletedFromMonth: null,
+      context: ExpenseContext.PJ,
+      valueType: EntryValueType.FIXED,
+    })
+  }
+
+  function pjTax(id: string) {
+    return new Entry({
+      id,
+      name: 'Imposto',
+      formula,
+      dueDay: 20,
+      kind: 'expense',
+      recurrence: 'monthly',
+      createdAt: M(2026, 1),
+      deletedFromMonth: null,
+      context: ExpenseContext.PJ,
+      valueType: EntryValueType.RELATIVE,
+    })
+  }
+
+  it('resolves a relative entry from fixed views', () => {
+    const views = svc.buildMonthView(
+      [pjIncome('inc', 100000), pjTax('tax')],
+      month,
+      new Map(),
+      new Map(),
+    )
+    const taxView = views.find((v) => v.entryId === 'tax')!
+    expect(taxView.amount.inCents).toBe(10000)
+  })
+
+  it('uses snapshot when present', () => {
+    const statuses = new Map([['tax', EntryStatus.CONFIRMED]])
+    const snapshots = new Map([['tax', 7777]])
+    const views = svc.buildMonthView(
+      [pjIncome('inc', 100000), pjTax('tax')],
+      month,
+      statuses,
+      snapshots,
+    )
+    const taxView = views.find((v) => v.entryId === 'tax')!
+    expect(taxView.amount.inCents).toBe(7777)
+    expect(taxView.status).toBe(EntryStatus.CONFIRMED)
   })
 })
